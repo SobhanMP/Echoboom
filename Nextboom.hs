@@ -4,20 +4,23 @@ module Nextboom
 where
 import Database.HDBC
 import Database.HDBC.Sqlite3
-
+import Control.Monad
 pluginRun :: String -> String
 pluginRun msg =
   if head command == "PING"
   then "PONG " ++ server
   else
-    case action of
-      "!add" -> "PRIVMSG " ++ chan ++ ":" ++ adD
-      "!remove" -> "PRIVMSG " ++ chan ++ ":" ++ removE
-      "!read" -> "PRIVMSG " ++ chan ++ ":" ++ reaD
-      otherwise -> ""
+    if length command >= 4
+    then
+      case action of
+        "!add" -> "PRIVMSG " ++ chan ++ " :" ++ adD
+        "!remove" -> "PRIVMSG " ++ chan ++ " :" ++ removE
+        "!read" -> "PRIVMSG " ++ chan ++ " :" ++ reaD
+        otherwise -> ""
+    else ""
   where command = words msg
-        action = tail $ command !! 4
-        chan =  command !! 3
+        action = tail $ command !! 3
+        chan =  command !! 2
         server = unwords . tail $ command
 
 
