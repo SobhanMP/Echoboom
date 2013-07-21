@@ -2,22 +2,31 @@ module Nextboom
 (
   pluginRun)
 where
+
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Control.Monad
-pluginRun :: (IConnection a) => String -> a -> String
+concatIOStrings' :: IO String -> IO String -> IO String
+concatIOStrings' a b = do
+  a' <- a
+  b' <- b
+  return $ a' ++ b'
+concatIOStrings :: [IO String] -> IO String
+concatIOStrings l = foldl concatIOStrings' (return "") l
+
+pluginRun :: (IConnection a) => String -> a -> IO String
 pluginRun msg conn=
   if head command == "PING"
-  then "PONG " ++ server
+  then return $ "PONG" ++ server
   else
     if length command >= 4
     then
       case action of
-        "!add" -> "PRIVMSG " ++ chan ++ " :" ++ adD user message conn 
-        "!remove" -> "PRIVMSG " ++ chan ++ " :" ++ removE 
-        "!read" -> "PRIVMSG " ++ chan ++ " :" ++ reaD 
-        otherwise -> ""
-    else ""
+        "!add" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),adD user message conn]
+        "!remove" -> return $"PRIVMSG " ++ chan ++ " :" ++ removE
+        "!read" -> return $"PRIVMSG " ++ chan ++ " :" ++ reaD
+        otherwise -> return ""
+    else return ""
   where command = words msg
         action = tail $ command !! 3
         chan =  command !! 2
@@ -27,13 +36,13 @@ pluginRun msg conn=
 
 
 reaD = "plugin not complete"
-adD :: (IConnection a) => String -> String -> a -> String
+adD :: (IConnection a) => String -> String -> a -> IO String
 adD user message conn = do
   r <- (run conn "INSERT INTO todo VALUES (?,?)" [toSql user,toSql message])
   commit conn
-  if ((fromSql r) == 0 )
-    then user++": Sucsess fully added todo"
-    else user++": Something has gone wrong :("
+  if r == 0
+    then return $user++": Sucsess fully added todo"
+    else return $user++": Something has gone wrong :("
   --where
 --    r<-conn "INSERT INTO todo VALUES (?,?)" [toSql user,toSql msg]) 
 removE = "plugin not complete"
