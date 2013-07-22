@@ -34,18 +34,15 @@ pluginRun msg conn=
         user = tail $takeWhile  (/='!') $head command
         message = unwords $drop 4 command
 
-reaD' :: (IConnection a) => String -> String -> a -> String
-reaD' user "" conn = do
+reaD :: (IConnection a) => String -> String -> a -> IO String
+reaD user "" conn = do
   r <- (quickQuery' conn "select msg from todo where name =?" [toSql user])
-  (show(length r) ++ " undone todo")
+  return (show(length r) ++ " undone todo")
 
-reaD' user msg conn = do
+reaD user msg conn = do
   let num = read msg :: Int
   r <-(quickQuery' conn "select msg from todo where name=?" [toSql user])
-  concat(map fromSql $ r !! ((read msg)-1)) ::String
-  
-reaD :: (IConnection a) => String -> String -> a -> IO String
-reaD user msg conn = return (user ++ ": " ++ reaD' user msg conn)
+  return (concat(map fromSql $ r !! ((read msg)-1)) ::String)
 
 adD :: (IConnection a) => String -> String -> a -> IO String
 adD user message conn = do
