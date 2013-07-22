@@ -23,8 +23,8 @@ pluginRun msg conn=
     then
       case action of
         "!add" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),adD user message conn]
-        "!remove" -> return $"PRIVMSG " ++ chan ++ " :" ++ removE
-        "!read" -> return $"PRIVMSG " ++ chan ++ " :" ++ reaD
+--        "!remove" ->  concatIOStrings [return $("PRIVMSG " ++ chan ++ " :"), removE user message conn]
+        "!read" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :"),reaD user message conn]
         otherwise -> return ""
     else return ""
   where command = words msg
@@ -34,15 +34,30 @@ pluginRun msg conn=
         user = tail $takeWhile  (/='!') $head command
         message = unwords $drop 4 command
 
+reaD' :: (IConnection a) => String -> String -> a -> String
+reaD' user "" conn = do
+  r <- (quickQuery' conn "select msg from todo where name =?" [toSql user])
+  (show(length r) ++ " undone todo")
 
-reaD = "plugin not complete"
+reaD' user msg conn = do
+  let num = read msg :: Int
+  r <-(quickQuery' conn "select msg from todo where name=?" [toSql user])
+  concat(map fromSql $ r !! ((read msg)-1)) ::String
+  
+reaD :: (IConnection a) => String -> String -> a -> IO String
+reaD user msg conn = return (user ++ ": " ++ reaD' user msg conn)
+
 adD :: (IConnection a) => String -> String -> a -> IO String
 adD user message conn = do
   r <- (run conn "INSERT INTO todo VALUES (?,?)" [toSql user,toSql message])
   commit conn
-  if r == 0
+  print r
+  if r == 1
     then return $user++": Sucsess fully added todo"
     else return $user++": Something has gone wrong :("
-  --where
---    r<-conn "INSERT INTO todo VALUES (?,?)" [toSql user,toSql msg]) 
-removE = "plugin not complete"
+         
+--removE :: (IConnection a) => String -> String -> a -> IO String
+--removE user "" conn = return ("action not defined")
+--removE user n conn = do
+  --r <- (quickQuery' conn "delete todo where name = ? and msg =?" [toSql user,toSql (reaD' user n conn)])
+ -- return ("removed todo")
