@@ -62,6 +62,8 @@ adD user message conn = do
 removE :: (IConnection a) => String -> String -> a -> IO String
 removE user "" conn = return ("action not defined")
 removE user n conn = do
-  r <-  reaD user n conn
-  a <-  (quickQuery' conn "delete from todo where name = ? and msg =?" [toSql user,toSql r])
+  r <-  reaD' user n conn
+  print user
+  print r
+  a <-  run conn ("delete from todo where name=? and msg=?") [toSql user,toSql r]
   return ("removed todo")
