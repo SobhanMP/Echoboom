@@ -37,7 +37,7 @@ pluginRun msg conn=
 reaD :: (IConnection a) => String -> String -> a -> IO String
 reaD user "" conn = do
   r <- (quickQuery' conn "select msg from todo where name =?" [toSql user])
-  return (show(length r) ++ " undone todo")
+  return (user ++ ": " ++ show(length r) ++ " undone todo")
 
 reaD user msg conn = do
   let num = read msg :: Int
