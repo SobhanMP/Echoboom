@@ -23,7 +23,7 @@ pluginRun msg conn=
     then
       case action of
         "!add" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),adD user message conn]
---        "!remove" ->  concatIOStrings [return $("PRIVMSG " ++ chan ++ " :"), removE user message conn]
+        "!remove" ->  concatIOStrings [return $("PRIVMSG " ++ chan ++ " :"), removE user message conn]
         "!read" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :"),reaD user message conn]
         otherwise -> return ""
     else return ""
@@ -42,7 +42,13 @@ reaD user "" conn = do
 reaD user msg conn = do
   let num = read msg :: Int
   r <-(quickQuery' conn "select msg from todo where name=?" [toSql user])
-  return (concat(map fromSql $ r !! ((read msg)-1)) ::String)
+  concatIOStrings [return (user++": " ),return( fromSql  (r !! (read msg-1)!!0)::String)]
+
+reaD' :: (IConnection a) => String -> String -> a ->IO String
+reaD' user msg conn = do
+  let num = read msg :: Int
+  r <-(quickQuery' conn "select msg from todo where name=?" [toSql user])
+  return  (fromSql (r !! (num -1) !!0) :: String)
 
 adD :: (IConnection a) => String -> String -> a -> IO String
 adD user message conn = do
@@ -53,8 +59,9 @@ adD user message conn = do
     then return $user++": Sucsess fully added todo"
     else return $user++": Something has gone wrong :("
          
---removE :: (IConnection a) => String -> String -> a -> IO String
---removE user "" conn = return ("action not defined")
---removE user n conn = do
-  --r <- (quickQuery' conn "delete todo where name = ? and msg =?" [toSql user,toSql (reaD' user n conn)])
- -- return ("removed todo")
+removE :: (IConnection a) => String -> String -> a -> IO String
+removE user "" conn = return ("action not defined")
+removE user n conn = do
+  r <-  reaD user n conn
+  a <-  (quickQuery' conn "delete from todo where name = ? and msg =?" [toSql user,toSql r])
+  return ("removed todo")
