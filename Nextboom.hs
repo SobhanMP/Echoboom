@@ -25,6 +25,7 @@ pluginRun msg conn=
         "!add" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),adD user message conn]
         "!remove" ->  concatIOStrings [return $("PRIVMSG " ++ chan ++ " :"), removE user message conn]
         "!read" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :"),reaD user message conn]
+        "!add'" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),adDother user (command!!4) (unwords (drop 5 command )) conn]
         otherwise -> return ""
     else return ""
   where command = words msg
@@ -58,7 +59,14 @@ adD user message conn = do
   if r == 1
     then return $user++": Sucsess fully added todo"
     else return $user++": Something has gone wrong :("
-         
+adDother :: (IConnection a) => String -> String -> String -> a -> IO String
+adDother user otheruser message conn = do
+  r <- (run conn "INSERT INTO todo VALUES (?,?)" [toSql otheruser,toSql (user++ ": " ++ message)])
+  commit conn
+  print r
+  if r == 1
+    then return $user++": Sucsess fully added todo"
+    else return $user++": Something has gone wrong :("
 removE :: (IConnection a) => String -> String -> a -> IO String
 removE user "" conn = return ("action not defined")
 removE user n conn = do
