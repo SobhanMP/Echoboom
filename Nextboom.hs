@@ -65,7 +65,7 @@ adDother user otheruser message conn = do
   commit conn
   print r
   if r == 1
-    then return $user++": Sucsess fully added todo"
+    then return $user++": Sucsess fully added todo for "++otheruser
     else return $user++": Something has gone wrong :("
 removE :: (IConnection a) => String -> String -> a -> IO String
 removE user "" conn = return ("action not defined")
