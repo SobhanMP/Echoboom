@@ -52,21 +52,20 @@ reaD' :: (IConnection a) => String -> String -> a ->IO String
 reaD' user msg conn = do
   let num = read msg :: Int
   r <-(quickQuery' conn "select msg from todo where name=?" [toSql user])
+--  commit conn
   return  (fromSql (r !! (num -1) !!0) :: String)
 
 adD :: (IConnection a) => String -> String -> a -> IO String
 adD user message conn = do
   r <- (run conn "INSERT INTO todo VALUES (?,?)" [toSql user,toSql message])
-  commit conn
-  print r
+--  commit conn
   if r == 1
     then return $user++": Sucsess fully added todo"
     else return $user++": Something has gone wrong :("
 adDother :: (IConnection a) => String -> String -> String -> a -> IO String
 adDother user otheruser message conn = do
   r <- (run conn "INSERT INTO todo VALUES (?,?)" [toSql otheruser,toSql (user++ ": " ++ message)])
-  commit conn
-  print r
+--  commit conn
   if r == 1
     then return $user++": Sucsess fully added todo for "++otheruser
     else return $user++": Something has gone wrong :("
@@ -74,20 +73,13 @@ removE :: (IConnection a) => String -> String -> a -> IO String
 removE user "" conn = return ("action not defined")
 removE user n conn = do
   r <-  reaD' user n conn
-  print user
-  print r
   a <-  run conn ("delete from todo where name=? and msg=?") [toSql user,toSql r]
-  commit conn
+--  commit conn
   return ("removed todo")
 bulk :: (IConnection a) => Int-> String -> a -> IO String
 bulk 0 msg conn = do
   return "muhahah1"
 bulk n msg conn = do
-  if n > 10
-    then bulk 10 msg conn
-    else do
-    print n
-    print msg
-    commit conn
-    concatIOStrings[pluginRun msg conn,return " ",bulk (n-1) msg conn]
+  pluginRun msg conn
+  bulk (n-1) msg conn
   

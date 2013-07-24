@@ -37,6 +37,7 @@ listen :: (IConnection a) => Handle -> a ->IO ()
 listen h conn= forever $ do
        s <- hGetLine h
        msg <- pluginRun s conn
+       commit conn
        when (msg /= "" )$write' h msg
       {- msg =<< try (pluginRun s conn) :: IO (Either SomeException String )
        case msg of
