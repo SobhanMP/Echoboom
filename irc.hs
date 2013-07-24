@@ -1,4 +1,5 @@
 import Control.Exception
+import Control.Monad
 import Network
 import System.IO
 import Text.Printf
@@ -44,5 +45,3 @@ listen h conn= forever $ do
         (Right x) -> when (x /= "") $write' h x
         (Left err) -> print err -}
         
-  where
-      forever a = do a; forever a
