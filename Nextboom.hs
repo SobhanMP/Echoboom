@@ -6,6 +6,7 @@ where
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Control.Monad
+
 concatIOStrings' :: IO String -> IO String -> IO String
 concatIOStrings' a b = do
   a' <- a
@@ -26,11 +27,13 @@ pluginRun msg conn=
         "!remove" ->  concatIOStrings [return $("PRIVMSG " ++ chan ++ " :"), removE user message conn]
         "!read" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :"),reaD user message conn]
         "!add'" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),adDother user (command!!4) (unwords (drop 5 command )) conn]
+        "!bulk" -> concatIOStrings [return ("PRIVMSG " ++ chan ++ " :" ),bulk bulk_num (unwords((take  3 command ) ++ (drop 5 command)))  conn]
         otherwise -> return ""
     else return ""
   where command = words msg
+        bulk_num = read $ command !! 4 :: Int
         action = tail $ command !! 3
-        chan =  command !! 2
+        chan = command !! 2
         server = unwords . tail $ command
         user = tail $takeWhile  (/='!') $head command
         message = unwords $drop 4 command
@@ -74,4 +77,17 @@ removE user n conn = do
   print user
   print r
   a <-  run conn ("delete from todo where name=? and msg=?") [toSql user,toSql r]
+  commit conn
   return ("removed todo")
+bulk :: (IConnection a) => Int-> String -> a -> IO String
+bulk 0 msg conn = do
+  return "muhahah1"
+bulk n msg conn = do
+  if n > 10
+    then bulk 10 msg conn
+    else do
+    print n
+    print msg
+    commit conn
+    concatIOStrings[pluginRun msg conn,return " ",bulk (n-1) msg conn]
+  

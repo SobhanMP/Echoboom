@@ -10,8 +10,8 @@ import Control.Exception
 import Data.Either
 server = "irc.freenode.org"
 port   = 6667
-chan   = ["#echoboom","#minix"]
-nick   = "echo-boom-bot1"
+chan   = ["#echoboom"]
+nick   = "echo-boom-bot"
          
 main = do
   conn <- connectSqlite3 "todo.db"
